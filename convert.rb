@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'bundler/setup'
 require 'csv'
+require 'bigdecimal'
 require_relative 'us_states'
 
 orig_data_path = 'data/orig'
@@ -54,5 +55,23 @@ CSV.open("#{parsed_data_path}/president.csv", 'w') do |csv|
     state_abbr = STATE_ABBR_BY_STATE.fetch(state)
     id = "#{state_abbr} - #{county}"
     csv << [id, row.fetch('candidate'), row.fetch('total_votes')]
+  end
+end
+
+CSV.open("#{parsed_data_path}/land_area.csv", 'w') do |csv|
+  csv << ["ID", "land area in square miles"]
+  CSV.read("#{orig_data_path}/land_area.csv", headers: true).each do |row|
+    area_name = row.fetch('Areaname')
+    next unless area_name.include?(',')
+
+    county, state_abbr = area_name.split(',')
+    county.strip!
+    state_abbr.strip!
+
+    # LND110210D = Land area in square miles 2010
+    # according to MASTDATA.xls
+    land_area_sq_miles_2010 = BigDecimal(row.fetch('LND110210D'))
+    id = "#{state_abbr} - #{county} County"
+    csv << [id, land_area_sq_miles_2010.to_f.round(0)]
   end
 end

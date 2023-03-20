@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# typed: strong
+# typed: strict
 require 'bundler/setup'
 require 'csv'
 require 'bigdecimal'
@@ -12,8 +12,9 @@ require 'friendly_numbers'
 # How much can you afford?
 affordablity_threshold = 300_000
 
-# How big a town do you want?
+# How big a county do you want?
 pop_range = (50_000..150_000)
+pop_density = nil
 
 # What's your politcs?
 biden_threshold = BigDecimal("0.50")
@@ -123,6 +124,11 @@ politics_by_id = votes_by_id.each_with_object({}) do |(id, votes), memo|
   )
 end
 
+land_area_by_id = CSV.read("#{parsed_data_path}/land_area.csv", headers: true).each_with_object({}) do |row, memo|
+  id = row.fetch('ID')
+  memo[id] = Integer(row.fetch("land area in square miles"))
+end
+
 
 class Location < T::Struct
   const :id, String
@@ -130,12 +136,17 @@ class Location < T::Struct
   const :real_estate, RealEstate
   const :pop, Population
   const :politics, Politics
+  const :land_area_in_sq_miles, Integer
 
   def risk_per_dollar
     @risk_per_dollar ||= risk.normalized_total / real_estate.normalized_median_home_price
   end
+
+  def population_density
+    @population_density ||= BigDecimal(pop.in_2020 / land_area_in_sq_miles)
+  end
 end
-shared_ids = real_estate_by_id.keys & risk_by_id.keys & population_by_id.keys & politics_by_id.keys
+shared_ids = real_estate_by_id.keys & risk_by_id.keys & population_by_id.keys & politics_by_id.keys & land_area_by_id.keys
 puts "Analyzing #{shared_ids.count} counties"
 locations = shared_ids.map do |id|
   Location.new(
@@ -143,10 +154,13 @@ locations = shared_ids.map do |id|
     risk: risk_by_id.fetch(id),
     real_estate: real_estate_by_id.fetch(id),
     pop: population_by_id.fetch(id),
-    politics: politics_by_id.fetch(id)
+    politics: politics_by_id.fetch(id),
+    land_area_in_sq_miles: land_area_by_id.fetch(id)
   )
 end
 
+
+## FILTERING
 
 affordable_locations = locations.filter { |location| location.real_estate.median_home_price <= affordablity_threshold }
 puts "Filter median home price: <= #{affordablity_threshold}"
@@ -163,7 +177,7 @@ risk_per_dollar_locations = filtered_locations.sort_by(&:risk_per_dollar).first(
 puts "Returning #{risk_per_dollar_locations.count} results"
 
 risk_per_dollar_table = Text::Table.new
-risk_per_dollar_table.head = ['Location', 'Risk per dollar', 'Normalized risk', 'Normalized median home price', 'Median price', 'Population', '% Biden']
+risk_per_dollar_table.head = ['Location', 'Risk per dollar', 'Normalized risk', 'Normalized median home price', 'Median price', 'Population', 'Pop. Density', '% Biden']
 risk_per_dollar_locations.each do |location|
   risk_per_dollar_table.rows << [
     location.id,
@@ -172,6 +186,7 @@ risk_per_dollar_locations.each do |location|
     location.real_estate.normalized_median_home_price.to_f.round(2),
     FriendlyNumbers.number_to_currency(location.real_estate.median_home_price, precision: 0),
     location.pop.in_2020,
+    location.population_density.to_f.round(2),
     location.politics.precent_for_biden_in_2020.to_f.round(2)
   ]
 end
