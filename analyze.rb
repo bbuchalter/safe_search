@@ -7,6 +7,22 @@ require 'sorbet-runtime'
 require 'text-table'
 require 'friendly_numbers'
 
+##################################################
+
+# How much can you afford?
+affordablity_threshold = 300_000
+
+# How big a town do you want?
+pop_range = (50_000..150_000)
+
+# What's your politcs?
+biden_threshold = BigDecimal("0.50")
+
+# How many results do you want?
+results_limit = 5
+
+##################################################
+
 parsed_data_path = 'data/parsed'
 
 class RealEstate < T::Struct
@@ -131,24 +147,19 @@ locations = shared_ids.map do |id|
   )
 end
 
-affordablity_threshold = 300_000
+
 affordable_locations = locations.filter { |location| location.real_estate.median_home_price <= affordablity_threshold }
 puts "Filter median home price: <= #{affordablity_threshold}"
 
-pop_range = (50_000..150_000)
 right_population = locations.filter { |location | pop_range.cover?(location.pop.in_2020) }
 puts "Filter population: #{pop_range}"
 
-biden_threshold = BigDecimal("0.50")
 right_politics = locations.filter { |location| location.politics.precent_for_biden_in_2020 >= biden_threshold }
 puts "Filter politcs: Percentage of 2020 votes for biden >= #{biden_threshold.to_f.round(2)}"
 
 filtered_locations = right_population & affordable_locations & right_politics
-limit = 5
-# filtered_locations = co_locations
-# limit = 100
 
-risk_per_dollar_locations = filtered_locations.sort_by(&:risk_per_dollar).first(limit)
+risk_per_dollar_locations = filtered_locations.sort_by(&:risk_per_dollar).first(results_limit)
 puts "Returning #{risk_per_dollar_locations.count} results"
 
 risk_per_dollar_table = Text::Table.new
