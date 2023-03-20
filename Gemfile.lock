@@ -1,0 +1,21 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    friendly_numbers (0.6.0)
+    sorbet (0.5.10722)
+      sorbet-static (= 0.5.10722)
+    sorbet-runtime (0.5.10722)
+    sorbet-static (0.5.10722-universal-darwin-22)
+    text-table (1.2.4)
+
+PLATFORMS
+  arm64-darwin-22
+
+DEPENDENCIES
+  friendly_numbers
+  sorbet
+  sorbet-runtime
+  text-table
+
+BUNDLED WITH
+   2.4.6
