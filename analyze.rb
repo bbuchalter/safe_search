@@ -10,17 +10,17 @@ require 'friendly_numbers'
 ##################################################
 
 # How much can you afford?
-affordablity_threshold = 300_000
+affordablity_threshold = nil
 
 # How big a county do you want?
-pop_range = (50_000..150_000)
+pop_range = nil
 pop_density = nil
 
 # What's your politcs?
-biden_threshold = BigDecimal("0.50")
+biden_threshold = nil
 
 # How many results do you want?
-results_limit = 5
+results_limit = 100
 
 ##################################################
 
@@ -162,16 +162,35 @@ end
 
 ## FILTERING
 
-affordable_locations = locations.filter { |location| location.real_estate.median_home_price <= affordablity_threshold }
-puts "Filter median home price: <= #{affordablity_threshold}"
+if affordablity_threshold
+  affordable_locations = locations.filter { |location| location.real_estate.median_home_price <= affordablity_threshold }
+  puts "Filter median home price: <= #{affordablity_threshold}"
+else
+  affordable_locations = locations
+end
 
-right_population = locations.filter { |location | pop_range.cover?(location.pop.in_2020) }
-puts "Filter population: #{pop_range}"
+if pop_range
+  right_population = locations.filter { |location | pop_range.cover?(location.pop.in_2020) }
+  puts "Filter population: #{pop_range}"
+else
+  right_population = locations
+end
 
-right_politics = locations.filter { |location| location.politics.precent_for_biden_in_2020 >= biden_threshold }
-puts "Filter politcs: Percentage of 2020 votes for biden >= #{biden_threshold.to_f.round(2)}"
+if pop_density
+  right_pop_density = locations.filter { |location | pop_density.cover?(location.population_density) }
+  puts "Filter population density: #{pop_density}"
+else
+  right_pop_density = locations
+end
 
-filtered_locations = right_population & affordable_locations & right_politics
+if biden_threshold
+  right_politics = locations.filter { |location| location.politics.precent_for_biden_in_2020 >= biden_threshold }
+  puts "Filter politcs: Percentage of 2020 votes for biden >= #{biden_threshold.to_f.round(2)}"
+else
+  right_politics = locations
+end
+
+filtered_locations = right_population & right_pop_density & affordable_locations & right_politics
 
 risk_per_dollar_locations = filtered_locations.sort_by(&:risk_per_dollar).first(results_limit)
 puts "Returning #{risk_per_dollar_locations.count} results"
