@@ -1,6 +1,6 @@
 # About SafeSearch
 
-Find a place that balances town size, cost, politics and climate risk.
+Find a place that balance population, cost, politics and climate risk.
 
 # About the data
 
@@ -10,6 +10,7 @@ I collected and cleaned four data sets, each with county-level data:
 - Median Home Sale prices (https://cdn.nar.realtor/sites/default/files/documents/2022-q3-county-median-prices-and-monthly-mortgage-payment-by-price-12-20-2022.pdf)
 - Population (https://www.census.gov/data/datasets/time-series/demo/popest/2020s-counties-total.html#par_textimage_739801612)
 - 2020 Presidential election results (https://www.kaggle.com/datasets/unanimad/us-election-2020?resource=download&select=president_county_candidate.csv)
+- Land area (https://www.census.gov/library/publications/2011/compendia/usa-counties-2011.html#LND)
 
 The original data is in `data/orig`. When you run `convert.rb` it generates the content in `data/parsed` which is intended to be consumed by `analyze.rb`.
 
@@ -18,7 +19,7 @@ The original data is in `data/orig`. When you run `convert.rb` it generates the 
 There are four filters configured at the top of `analyze.rb`:
 
 - How much can you afford?
-- How big a town do you want?
+- How much population do you want?
 - What's your politcs?
 - How many results do you want?
 
